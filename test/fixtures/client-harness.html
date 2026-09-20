@@ -1,0 +1,68 @@
+<div id="root"></div>
+<script type="module">
+  import * as React from 'https://esm.sh/react@19.1.1'
+  import { createRoot } from 'https://esm.sh/react-dom@19.1.1/client'
+
+  const graph = {
+    nodes: [
+      { id: 'session:demo', kind: 'session', title: 'Workspace Graph 实现', summary: '拖拽交互回归夹具', tags: ['workspace', 'graph'], props: { layout: { x: 0, y: 0 } } },
+      { id: 'file:client', kind: 'file', title: 'client.js', props: { layout: { x: 260, y: 80 } } },
+      { id: 'file:store', kind: 'file', title: 'store.js', props: { layout: { x: -240, y: 100 } } }
+    ],
+    edges: [
+      { id: 'edge:1', from: 'session:demo', to: 'file:client', kind: 'edited_by_agent', confidence: 1, props: {} },
+      { id: 'edge:2', from: 'session:demo', to: 'file:store', kind: 'references', confidence: 1, props: {} }
+    ],
+    totalNodes: 3,
+    totalEdges: 2
+  }
+
+  window.fetch = async (url, init = {}) => {
+    if (String(url).endsWith('/graph')) return Response.json(graph)
+    if (String(url).endsWith('/node') && init.method === 'POST') {
+      const node = JSON.parse(init.body)
+      window.__lastSavedNode = node
+      const index = graph.nodes.findIndex(item => item.id === node.id)
+      if (index >= 0) graph.nodes[index] = node
+      return Response.json({ node })
+    }
+    return Response.json({})
+  }
+
+  const root = createRoot(document.getElementById('root'))
+  window.__ModuleLoader__ = {
+    load(definition) {
+      const plugin = definition.factory(id => {
+        if (id === 'react') return React
+        if (id === '@deepseek-ai/dsh-client-ui-primitives') {
+          return {
+            Button: props => React.createElement('button', props, props.children),
+            IconDatabaseOutline16: props => React.createElement('span', props, 'DB')
+          }
+        }
+        throw new Error('Unknown test module: ' + id)
+      })
+      const slots = {
+        inject(_name, register) { register() },
+        register(options, render) {
+          if (options.name === 'main') root.render(render())
+          return () => {}
+        }
+      }
+      plugin.apply({ slots, layout: {} })
+    }
+  }
+
+  await import('/client/client.js?test')
+</script>
+<style>
+  :root {
+    --dsw-alias-bg-layer-1: #202124;
+    --dsw-alias-bg-layer-2: #2a2b2f;
+    --dsw-alias-label-primary: #f4f4f5;
+    --dsw-alias-label-caption: #8c9099;
+  }
+  * { box-sizing: border-box; }
+  html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+  body { background: #202124; font-family: Arial, sans-serif; }
+</style>
