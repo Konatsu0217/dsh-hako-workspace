@@ -1,0 +1,4 @@
+# dsh bundle patch: inserts dsh-hako-workspace into a profile's layer stack.
+- insert:
+    - id: dsh-hako-workspace
+      name: 'dsh-hako-workspace'
